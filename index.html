@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Racing Prototype</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #000;
+        font-family: sans-serif;
+      }
+      #root {
+        width: 100vw;
+        height: 100vh;
+      }
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        pointer-events: none;
+        z-index: 10;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        background: rgba(0,0,0,0.7);
+        padding: 10px 20px;
+        border-radius: 8px;
+      }
+      #ui {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        color: white;
+        text-shadow: 1px 1px 2px black;
+        pointer-events: none;
+        z-index: 10;
+        font-size: 16px;
+      }
+      .instructions {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading">Loading Assets...</div>
+    <div id="ui">
+      <div>🏎️ THREE.JS RACING PRO</div>
+      <div class="instructions">
+        ↑ Accelerate | ↓ Reverse | ← → Steer<br/>
+        [C] Camera | [E] Theme | [B] BGM | [L] Headlights<br/>
+        🔊 Sound will auto-fade when stopped
+      </div>
+    </div>
+    
+    <!-- Speedometer -->
+    <div id="speedometer" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); text-align: center; font-family: 'Courier New', monospace; text-shadow: 2px 2px 0px #000; z-index: 100; pointer-events: none;">
+        <div id="speedo-val" style="font-size: 4.5rem; font-weight: bold; color: #fff; line-height: 1; font-style: italic;">0</div>
+        <div style="font-size: 1.5rem; color: #00ffcc; letter-spacing: 3px; font-weight: bold; margin-top: -5px;">KM/H</div>
+    </div>
+    
+    <!-- Theme Indicator -->
+    <div id="theme-indicator" style="position: absolute; top: 20px; right: 20px; font-family: 'Courier New', monospace; font-size: 1.5rem; font-weight: bold; color: #fff; text-shadow: 2px 2px 0 #000; z-index: 100; pointer-events: none;">
+        Theme: Sunset
+    </div>
+
+    <!-- BGM Indicator -->
+    <div id="bgm-indicator" style="position: absolute; top: 50px; right: 20px; font-family: 'Courier New', monospace; font-size: 1.2rem; color: #00ffcc; text-shadow: 1px 1px 0 #000; z-index: 100; pointer-events: none;">
+        BGM: Off
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
