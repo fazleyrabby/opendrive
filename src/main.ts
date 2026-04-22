@@ -671,12 +671,96 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => {
     if (Object.keys(keys).includes(e.code)) keys[e.code as keyof typeof keys] = false;
     
-    if (!keys.ArrowUp && !keys.ArrowDown && !keys.ArrowLeft && !keys.ArrowRight) {
+    if (!keys.ArrowUp && !keys.ArrowDown && !keys.ArrowLeft && !keys.ArrowRight && !isAutoGas) {
         if (!engineStopTimeout) {
             engineStopTimeout = window.setTimeout(() => { isEngineRunning = false; }, 2500); 
         }
     }
 });
+
+let isAutoGas = false;
+let isTiltSteer = false;
+let tiltSteerValue = 0; // -1 to 1
+
+function setupMobileControls() {
+    const parseKey = (btnId: string, kName: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight') => {
+        const btn = document.getElementById(btnId);
+        if(!btn) return;
+        const activate = (e: Event) => {
+            e.preventDefault();
+            initAudio();
+            isEngineRunning = true;
+            if (engineStopTimeout) { clearTimeout(engineStopTimeout); engineStopTimeout = null; }
+            keys[kName] = true;
+        };
+        const deactivate = (e: Event) => {
+            e.preventDefault();
+            keys[kName] = false;
+        };
+        btn.addEventListener('touchstart', activate);
+        btn.addEventListener('touchend', deactivate);
+        btn.addEventListener('mousedown', activate);
+        btn.addEventListener('mouseup', deactivate);
+    };
+
+    parseKey('btn-left', 'ArrowLeft');
+    parseKey('btn-right', 'ArrowRight');
+    parseKey('btn-gas', 'ArrowUp');
+    parseKey('btn-brake', 'ArrowDown');
+
+    const btnAutoGas = document.getElementById('btn-auto-gas');
+    if(btnAutoGas) {
+        btnAutoGas.addEventListener('click', () => {
+            isAutoGas = !isAutoGas;
+            btnAutoGas.innerText = `Auto Gas: ${isAutoGas ? 'ON' : 'OFF'}`;
+            initAudio();
+            isEngineRunning = true;
+        });
+    }
+
+    const btnTiltSteer = document.getElementById('btn-tilt-steers');
+    if(btnTiltSteer) {
+        btnTiltSteer.addEventListener('click', async () => {
+            if (!isTiltSteer) {
+                if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+                    try {
+                        const permission = await (DeviceOrientationEvent as any).requestPermission();
+                        if (permission !== 'granted') {
+                            alert('Permission denied for device orientation.');
+                            return;
+                        }
+                    } catch (e) {
+                         console.error(e);
+                    }
+                }
+                window.addEventListener('deviceorientation', handleOrientation);
+                isTiltSteer = true;
+                btnTiltSteer.innerText = 'Tilt Steer: ON';
+            } else {
+                window.removeEventListener('deviceorientation', handleOrientation);
+                isTiltSteer = false;
+                tiltSteerValue = 0;
+                btnTiltSteer.innerText = 'Tilt Steer: OFF';
+            }
+        });
+    }
+}
+
+function handleOrientation(event: DeviceOrientationEvent) {
+    let tilt = 0;
+    const orientationAngle = (window.screen && window.screen.orientation && window.screen.orientation.angle) || window.orientation || 0;
+    if (orientationAngle === 90) {
+        tilt = event.beta || 0;
+    } else if (orientationAngle === -90) {
+        tilt = -(event.beta || 0);
+    } else {
+        tilt = event.gamma || 0;
+    }
+    const clamped = Math.max(-30, Math.min(30, tilt));
+    tiltSteerValue = clamped / 30; // normalized -1 to 1
+}
+
+setTimeout(setupMobileControls, 500);
 
 // --- GAME LOOP ---
 const clock = new THREE.Clock();
@@ -689,7 +773,7 @@ function animate() {
     if (!carRoot) return;
 
     // Kinematics
-    if (keys.ArrowUp) carState.speed += carState.acceleration * delta;
+    if (keys.ArrowUp || isAutoGas) carState.speed += carState.acceleration * delta;
     else if (keys.ArrowDown) carState.speed -= carState.acceleration * delta;
     else {
         if (carState.speed > 0) { carState.speed -= carState.friction * delta; if (carState.speed < 0) carState.speed = 0; }
@@ -710,13 +794,23 @@ function animate() {
         const steerDir = carState.speed > 0 ? 1 : -1;
         const speedFactor = 1 - (Math.abs(carState.speed) / carState.maxSpeed) * 0.4;
         let turnRate = 0;
-        if (keys.ArrowLeft) {
-            turnRate = carState.rotationSpeed * steerDir * speedFactor * delta;
-            carRoot.rotation.y += turnRate; targetRoll = 0.08 * steerDir; 
-        }
-        if (keys.ArrowRight) {
-            turnRate = carState.rotationSpeed * steerDir * speedFactor * delta;
-            carRoot.rotation.y -= turnRate; targetRoll = -0.08 * steerDir;
+        
+        if (isTiltSteer && Math.abs(tiltSteerValue) > 0.05) {
+             // Analog-like steering using device rotation
+             turnRate = carState.rotationSpeed * steerDir * speedFactor * delta * Math.abs(tiltSteerValue);
+             const tiltDir = tiltSteerValue > 0 ? -1 : 1; 
+             carRoot.rotation.y += turnRate * tiltDir;
+             targetRoll = 0.08 * steerDir * tiltDir;
+        } else {
+             // Digital steering via keys/d-pad
+             if (keys.ArrowLeft) {
+                 turnRate = carState.rotationSpeed * steerDir * speedFactor * delta;
+                 carRoot.rotation.y += turnRate; targetRoll = 0.08 * steerDir; 
+             }
+             if (keys.ArrowRight) {
+                 turnRate = carState.rotationSpeed * steerDir * speedFactor * delta;
+                 carRoot.rotation.y -= turnRate; targetRoll = -0.08 * steerDir;
+             }
         }
     }
     carBodyGroup.rotation.z = THREE.MathUtils.lerp(carBodyGroup.rotation.z, targetRoll, 5 * delta);

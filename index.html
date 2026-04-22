@@ -72,6 +72,72 @@
     <div id="bgm-indicator" style="position: absolute; top: 50px; right: 20px; font-family: 'Courier New', monospace; font-size: 1.2rem; color: #00ffcc; text-shadow: 1px 1px 0 #000; z-index: 100; pointer-events: none;">
         BGM: Off
     </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+        <div class="top-row">
+            <button id="btn-auto-gas">Auto Gas: OFF</button>
+            <button id="btn-tilt-steers">Tilt Steer: OFF</button>
+        </div>
+        <div class="bottom-row">
+            <div class="d-pad">
+                <button id="btn-left">◀</button>
+                <button id="btn-right">▶</button>
+            </div>
+            <div class="pedals">
+                <button id="btn-brake">⏬</button>
+                <button id="btn-gas">⏫</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+      #mobile-controls {
+          display: none;
+          position: absolute;
+          inset: 0;
+          z-index: 200;
+          pointer-events: none;
+          touch-action: none;
+          user-select: none;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 20px;
+      }
+      #mobile-controls button {
+          pointer-events: auto;
+          background: rgba(0,0,0,0.5);
+          border: 2px solid rgba(255,255,255,0.3);
+          color: white;
+          border-radius: 12px;
+          cursor: pointer;
+      }
+      #mobile-controls .bottom-row button {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          font-size: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          backdrop-filter: blur(4px);
+      }
+      #mobile-controls .top-row button {
+          padding: 10px 15px;
+          font-weight: bold;
+          font-family: 'Courier New', monospace;
+      }
+      #mobile-controls .bottom-row button:active { background: rgba(255,255,255,0.4); }
+      #mobile-controls .top-row { display: flex; justify-content: center; gap: 10px; margin-top: 80px; }
+      #mobile-controls .bottom-row { display: flex; justify-content: space-between; align-items: flex-end; flex: 1; margin-bottom: 20px;}
+      #mobile-controls .d-pad, #mobile-controls .pedals { display: flex; gap: 15px; }
+
+      @media (pointer: coarse), (max-width: 768px) {
+          #mobile-controls { display: flex; }
+          #ui { display: none; }
+      }
+    </style>
+
     <div id="root"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
